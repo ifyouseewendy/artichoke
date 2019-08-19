@@ -3,11 +3,27 @@
 
 #define WASM_EXPORT __attribute__((visibility("default")))
 
+/* struct sliceutf8 { */
+/*     char *str; */
+/*     unsigned length; */
+/* } */
+/*  */
+/* struct sliceint { */
+/*     int *str; */
+/*     unsigned length; */
+/* } */
+
 WASM_EXPORT int run(int x) {
 	mrb_state *mrb = mrb_open();
 	if (!mrb) { abort(); }
-	mrb_value rv = mrb_load_string(mrb, "10 * 10");
-	int r = mrb_fixnum(rv);
+
+	mrb_value obj = mrb_load_string(mrb, "def run(x); x * 10; end");
+        mrb_sym m_sym = mrb_intern_lit(mrb, "run"); // Symbol for method.
+        mrb_int i = x;
+        mrb_value p = mrb_fixnum_value(i);
+        mrb_value ret = mrb_funcall_argv(mrb, obj, m_sym, 1, &p); // Calling ruby function from test.rb.
+	int r = mrb_fixnum(ret);
+
 	mrb_close(mrb);
 	return r;
 }
