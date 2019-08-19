@@ -1,0 +1,5 @@
+type Query {
+	run(root: Int!): Int!
+}
+
+schema { query: Query }
