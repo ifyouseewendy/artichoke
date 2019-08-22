@@ -1,31 +1,42 @@
 #include <mruby.h>
 #include <mruby/compile.h>
+#include <mruby/string.h>
 
 #define WASM_EXPORT __attribute__((visibility("default")))
 
-/* struct sliceutf8 { */
-/*     char *str; */
-/*     unsigned length; */
-/* } */
 /*  */
 /* struct sliceint { */
-/*     int *str; */
+/*     int *data; */
 /*     unsigned length; */
 /* } */
 
-WASM_EXPORT int run(int x) {
+struct SliceUtf8 {
+    char *data;
+    unsigned length;
+};
+
+WASM_EXPORT struct SliceUtf8* run(struct SliceUtf8* s) {
 	mrb_state *mrb = mrb_open();
 	if (!mrb) { abort(); }
 
-	mrb_value obj = mrb_load_string(mrb, "def run(x); x * 10; end");
-        mrb_sym m_sym = mrb_intern_lit(mrb, "run"); // Symbol for method.
-        mrb_int i = x;
-        mrb_value p = mrb_fixnum_value(i);
-        mrb_value ret = mrb_funcall_argv(mrb, obj, m_sym, 1, &p); // Calling ruby function from test.rb.
-	int r = mrb_fixnum(ret);
+        // Load function
+	mrb_value func = mrb_load_string(mrb, "def run(str); \"hello #{str}\"; end");
+        mrb_sym sym = mrb_intern_lit(mrb, "run"); // Symbol for method.
+
+        // Prepare argument
+        mrb_value str = mrb_str_new_static(mrb, s->data, s->length);
+
+        // Call function and prepare return
+        mrb_value ret_str = mrb_funcall_argv(mrb, func, sym, 1, &str);
+
+        struct SliceUtf8 slice = {
+            .data = RSTRING_PTR(ret_str),
+            .length = RSTRING_LEN(ret_str)
+        };
 
 	mrb_close(mrb);
-	return r;
+
+        return &slice;
 }
 
 WASM_EXPORT void* shopify_runtime_allocate(size_t s) {
