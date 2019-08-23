@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+require "json"
+
+def run(command)
+  puts command
+  ret = `#{command}`
+  puts "=> #{ret.inspect}"
+  ret
+end
+
+if ARGV[0] == "--compile"
+  puts "--> Compile"
+  ret = run("make -f wasm.make")
+end
+
+puts
+puts "--> Deploy"
+ret = run("curl localhost:8000/module/ -F bytecode=@./library.wasm -F schema=@./test.schema")
+module_id = JSON.parse(ret)["hash"]
+
+puts
+puts "--> Run"
+run(%Q(curl localhost:8000/module/#{module_id} --data-ascii '[1,2,3]'))
