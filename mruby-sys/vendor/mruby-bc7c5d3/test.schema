@@ -1,5 +1,5 @@
 type Query {
-	run(root: String!): String!
+	run(root: [Int!]!): Int!
 }
 
 schema { query: Query }
