@@ -1,5 +1,9 @@
+input Input {
+  price: Int!
+}
+
 type Query {
-	run(root: [Int!]!): Int!
+	run(root: Input!): Int!
 }
 
 schema { query: Query }
