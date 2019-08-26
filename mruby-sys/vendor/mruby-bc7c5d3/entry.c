@@ -5,14 +5,29 @@
 
 #define WASM_EXPORT __attribute__((visibility("default")))
 
-struct Input {
+/* struct Input { */
+/*     int price; */
+/* }; */
+/*  */
+/* mrb_value input_price(mrb_state *mrb, mrb_value self) { */
+/*     struct Input *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
+/*     return mrb_fixnum_value(ptr->price); */
+/* } */
+
+struct Output {
     int price;
 };
-
-mrb_value input_price(mrb_state *mrb, mrb_value self) {
-    struct Input *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+mrb_value output_price(mrb_state *mrb, mrb_value self) {
+    struct Output *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@price")));
     return mrb_fixnum_value(ptr->price);
 }
+
+/* mrb_value output_new(mrb_state *mrb, mrb_value self) { */
+/*     mrb_int i = 42; */
+/*     mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@price"), mrb_fixnum_value(i)); */
+/*  */
+/*     return self; */
+/* } */
 
 /* struct slice_of_int { */
 /*     int32_t *data; */
@@ -37,20 +52,19 @@ mrb_value input_price(mrb_state *mrb, mrb_value self) {
 /*     return mrb_fixnum_value(slice->length); */
 /* } */
 
-WASM_EXPORT int run(struct Input *input) {
+WASM_EXPORT int run(int price) {
     mrb_state *mrb = mrb_open();
     if (!mrb) { abort(); }
 
-    mrb_value script = mrb_load_string(mrb, "class Input; def initialize(struct_ptr); @struct_ptr = struct_ptr; end; end; def run(input); input.price; end");
-    struct RClass *mrb_input = mrb_class_get(mrb, "Input");
-    mrb_define_method(mrb, mrb_input, "price", &input_price, MRB_ARGS_NONE());
-    mrb_value v = mrb_cptr_value(mrb, input);
-    mrb_value arg = input ? mrb_obj_new(mrb, mrb_input, 1, &v) : mrb_nil_value();
+    mrb_value script = mrb_load_string(mrb, "class Output; def price; @price; end; def initialize; @price = 42; end; end; def run(num); Output.new; end");
+    /* struct RClass *mrb_output = mrb_class_get(mrb, "Output"); */
+    /* mrb_define_method(mrb, mrb_output, "price", &output_price, MRB_ARGS_NONE()); */
 
-    mrb_value rv = mrb_funcall_argv(mrb, script, mrb_intern_lit(mrb, "run"), 1, &arg);
+    mrb_int i = 42;
+    mrb_value p = mrb_fixnum_value(i);
+    mrb_value rv = mrb_funcall_argv(mrb, script, mrb_intern_lit(mrb, "run"), 1, &p);
 
-    mrb_close(mrb);
-    return mrb_fixnum(rv);
+    return mrb_fixnum(mrb_iv_get(mrb, rv, mrb_intern_lit(mrb, "@price")));
 }
 
 WASM_EXPORT void* shopify_runtime_allocate(size_t s) {

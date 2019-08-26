@@ -1,9 +1,9 @@
-input Input {
+type Output {
   price: Int!
 }
 
 type Query {
-	run(root: Input!): Int!
+	run(root: Int!): Int!
 }
 
 schema { query: Query }

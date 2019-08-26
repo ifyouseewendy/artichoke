@@ -20,4 +20,4 @@ module_id = JSON.parse(ret)["hash"]
 
 puts
 puts "--> Run"
-run(%Q(curl localhost:8000/module/#{module_id} --data-ascii '{"price": 42}'))
+run(%Q(curl localhost:8000/module/#{module_id} --data-ascii 42))
