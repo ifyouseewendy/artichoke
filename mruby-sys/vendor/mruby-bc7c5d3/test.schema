@@ -2,8 +2,12 @@ type Output {
   price: Int!
 }
 
+input Input {
+  price: Int!
+}
+
 type Query {
-	run(root: Int!): Int!
+	run(root: Input!): Output!
 }
 
 schema { query: Query }
