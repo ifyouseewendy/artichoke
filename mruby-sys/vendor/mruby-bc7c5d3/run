@@ -8,7 +8,13 @@ def run(command)
   ret
 end
 
-if ARGV[0] == "--compile"
+unless ARGV[0] == "--skip-compile"
+  if File.exist?("library.wasm")
+    puts "--> Remove library.wasm"
+    run("rm ./library.wasm")
+    puts
+  end
+
   puts "--> Compile"
   ret = run("make -f wasm.make")
 end
@@ -20,4 +26,4 @@ module_id = JSON.parse(ret)["hash"]
 
 puts
 puts "--> Run"
-run(%Q(curl localhost:8000/module/#{module_id} --data-ascii 42))
+run(%Q(curl localhost:8000/module/#{module_id} --data-ascii '{"price": 42}'))
