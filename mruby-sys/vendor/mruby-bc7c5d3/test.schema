@@ -1,13 +1,20 @@
-type Output {
-  price: Int!
+type Money {
+	subunits: Int!
+	iso_currency: String!
 }
 
-input Input {
-  price: Int!
+input MoneyInput {
+	subunits: Int!
+}
+
+input MultiCurrencyRequest {
+	money: MoneyInput!
+	presentment_currency: String!
+	shop_currency: String!
 }
 
 type Query {
-	run(root: Input!): Output!
+	run(root: MultiCurrencyRequest!): Money!
 }
 
 schema { query: Query }
