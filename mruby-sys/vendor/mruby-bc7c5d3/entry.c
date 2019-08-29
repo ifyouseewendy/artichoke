@@ -11,6 +11,28 @@ struct SliceUtf8 {
     char *data;
     unsigned length;
 };
+/* struct slice_of_int { */
+/*     int32_t *data; */
+/*     uint32_t length; */
+/* }; */
+/*  */
+/* mrb_value slice_of_int_each(mrb_state *mrb, mrb_value self) { */
+/*     mrb_value block; */
+/*     mrb_get_args(mrb, "&!", &block); */
+/*  */
+/*     struct slice_of_int *slice = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
+/*  */
+/*     for(uint32_t i = 0; i < slice->length; i++) { */
+/*         mrb_yield(mrb, block, mrb_fixnum_value(slice->data[i])); */
+/*     } */
+/*  */
+/*     return self; */
+/* } */
+/*  */
+/* mrb_value slice_of_int_length(mrb_state *mrb, mrb_value self) { */
+/*     struct slice_of_int *slice = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
+/*     return mrb_fixnum_value(slice->length); */
+/* } */
 
 /* Input */
 struct MoneyInput {
@@ -59,29 +81,6 @@ struct Money {
     int subunits;
     struct SliceUtf8* iso_currency;
 };
-
-/* struct slice_of_int { */
-/*     int32_t *data; */
-/*     uint32_t length; */
-/* }; */
-/*  */
-/* mrb_value slice_of_int_each(mrb_state *mrb, mrb_value self) { */
-/*     mrb_value block; */
-/*     mrb_get_args(mrb, "&!", &block); */
-/*  */
-/*     struct slice_of_int *slice = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
-/*  */
-/*     for(uint32_t i = 0; i < slice->length; i++) { */
-/*         mrb_yield(mrb, block, mrb_fixnum_value(slice->data[i])); */
-/*     } */
-/*  */
-/*     return self; */
-/* } */
-/*  */
-/* mrb_value slice_of_int_length(mrb_state *mrb, mrb_value self) { */
-/*     struct slice_of_int *slice = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
-/*     return mrb_fixnum_value(slice->length); */
-/* } */
 
 WASM_EXPORT struct Money* run(struct MultiCurrencyRequest* mcr) {
     mrb_state *mrb = mrb_open();
