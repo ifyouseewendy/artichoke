@@ -26,4 +26,14 @@ module_id = JSON.parse(ret)["hash"]
 
 puts
 puts "--> Run"
-run(%Q(curl localhost:8000/module/#{module_id} --data-ascii '{"money": {"subunits": 11}, "presentment_currency": "CAD", "shop_currency": "CAD"}'))
+json = <<JSON
+{
+  "money": {
+    "subunits": 98,
+    "iso_currency": "CAD"
+  },
+  "presentment_currency": "CAD",
+  "shop_currency": "CAD"
+}
+JSON
+run(%Q(curl localhost:8000/module/#{module_id} --data-ascii '#{json}'))

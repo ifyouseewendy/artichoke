@@ -15,16 +15,18 @@ struct SliceUtf8 {
 /* Input */
 struct MoneyInput {
     int subunits;
+    struct SliceUtf8* iso_currency;
 };
 mrb_value mi_subunits(mrb_state *mrb, mrb_value self) {
-    /* mrb_value struct_ptr = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")); */
-    /*  */
-    /* if (mrb_nil_p(struct_ptr)) { */
-    /*     return mrb_fixnum_value(0); */
-    /* } */
+    struct MoneyInput *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+    return mrb_fixnum_value(ptr->subunits);
+}
+mrb_value mi_iso_currency(mrb_state *mrb, mrb_value self) {
+    struct MoneyInput *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+    struct SliceUtf8* s = ptr->iso_currency;
 
-    /* return mrb_fixnum_value(ptr->subunits); */
-    return mrb_fixnum_value(42);
+    mrb_value str = mrb_str_new(mrb, s->data, s->length);
+    return str;
 }
 
 struct MultiCurrencyRequest {
@@ -33,13 +35,13 @@ struct MultiCurrencyRequest {
     struct SliceUtf8* shop_currency;
 };
 mrb_value mcr_money(mrb_state *mrb, mrb_value self) {
-    mrb_value o = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@_money"));
-
-    return o;
+    return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@_money"));
 }
 mrb_value mcr_presentment_currency(mrb_state *mrb, mrb_value self) {
     struct MultiCurrencyRequest *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
     struct SliceUtf8* s = ptr->presentment_currency;
+
+    if (s == NULL) { return mrb_nil_value(); }
 
     mrb_value str = mrb_str_new(mrb, s->data, s->length);
     return str;
@@ -91,22 +93,23 @@ WASM_EXPORT struct Money* run(struct MultiCurrencyRequest* mcr) {
                             class MoneyInput \n\
                             end \n\
                             class Money \n\
-                              def initialize(subunits) \n\
+                              def initialize(subunits, iso_currency) \n\
                                 @subunits = subunits \n\
-                                @iso_currency = 'hello world' \n\
+                                @iso_currency = iso_currency \n\
                               end \n\
                             end \n\
-                            def run(input) \n\
-                              if input.presentment_currency == 'CAD' && input.shop_currency == 'CAD' \n\
-                                Money.new(input.money.subunits) \n\
+                            def run(req) \n\
+                              subunits = req.money.subunits \n\
+                              if subunits % 10 >= 5 \n\
+                                Money.new(subunits + 10 - subunits % 10, req.money.iso_currency) \n\
                               else \n\
-                                Money.new(3) \n\
+                                Money.new(subunits - subunits % 10, req.money.iso_currency) \n\
                               end \n\
                             end \n\
                         ";
     mrb_value script = mrb_load_string(mrb, ruby_script);
 
-    /* define class */
+    /* Define class */
     struct RClass *mrb_mcr_class = mrb_class_get(mrb, "MultiCurrencyRequest");
     mrb_define_method(mrb, mrb_mcr_class, "money", &mcr_money, MRB_ARGS_NONE());
     mrb_define_method(mrb, mrb_mcr_class, "presentment_currency", &mcr_presentment_currency, MRB_ARGS_NONE());
@@ -114,26 +117,27 @@ WASM_EXPORT struct Money* run(struct MultiCurrencyRequest* mcr) {
 
     struct RClass *mrb_mi_class = mrb_class_get(mrb, "MoneyInput");
     mrb_define_method(mrb, mrb_mi_class, "subunits", &mi_subunits, MRB_ARGS_NONE());
+    mrb_define_method(mrb, mrb_mi_class, "iso_currency", &mi_iso_currency, MRB_ARGS_NONE());
 
     /* Initialize input */
-    /* init MultiCurrencyRequest object */
-    mrb_value mrb_mcr_ptr = mrb_cptr_value(mrb, mcr);
     mrb_value nil = mrb_nil_value();
-    mrb_value mrb_mcr_obj = mcr ? mrb_obj_new(mrb, mrb_mcr_class, 0, &nil) : mrb_nil_value();
-    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_mcr_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_mcr_ptr);
-
     /* init MoneyInput object */
     mrb_value mrb_mi_ptr = mrb_cptr_value(mrb, mcr->money);
     mrb_value mrb_mi_obj = mrb_obj_new(mrb, mrb_mi_class, 0, &nil);
     mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_mi_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_mi_ptr);
 
-    /* save mi object as instance variable @_money of mcr object */
+    /* init MultiCurrencyRequest object */
+    mrb_value mrb_mcr_ptr = mrb_cptr_value(mrb, mcr);
+    mrb_value mrb_mcr_obj = mcr ? mrb_obj_new(mrb, mrb_mcr_class, 0, &nil) : mrb_nil_value();
+    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_mcr_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_mcr_ptr);
+
+    /* set mi object as an instance variable of mcr object */
     mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_mcr_obj), mrb_intern_lit(mrb, "@_money"), mrb_mi_obj);
 
-    /* run */
+    /* Run */
     mrb_value rv = mrb_funcall_argv(mrb, script, mrb_intern_lit(mrb, "run"), 1, &mrb_mcr_obj);
 
-    /* handle output */
+    /* Handle output */
     mrb_value subunits = mrb_iv_get(mrb, rv, mrb_intern_lit(mrb, "@subunits"));
     mrb_value iso_currency = mrb_iv_get(mrb, rv, mrb_intern_lit(mrb, "@iso_currency"));
 

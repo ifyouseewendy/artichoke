@@ -5,12 +5,13 @@ type Money {
 
 input MoneyInput {
 	subunits: Int!
+	iso_currency: String!
 }
 
 input MultiCurrencyRequest {
 	money: MoneyInput!
-	presentment_currency: String!
-	shop_currency: String!
+	presentment_currency: String
+	shop_currency: String
 }
 
 type Query {
