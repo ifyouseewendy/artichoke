@@ -12,3 +12,7 @@ make it running,
 
 1. Init Runtime Engine in release mode, by `env MEMCACHED_SERVERS=runtime-engine.railgun cargo run --release`
 2. Compile, deploy and run by `./run`
+
+How do we use this project to run MRuby script on Runtime Engine?
+
+![design](./design.png)
