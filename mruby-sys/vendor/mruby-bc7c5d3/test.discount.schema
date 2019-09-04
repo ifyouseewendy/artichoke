@@ -1,0 +1,74 @@
+input Price {
+	cents: Int!
+}
+
+type PriceOutput {
+	cents: Int!
+}
+
+input Product {
+	id: Int!
+	title: String!
+	tags: [String!]!
+	gift_card: Boolean!
+}
+
+type ProductOutput {
+	id: Int!
+	title: String!
+	tags: [String!]!
+	gift_card: Boolean!
+}
+
+input Variant {
+	id: Int!
+	product: Product!
+	price: String!
+	skus: [String!]!
+}
+
+type VariantOutput {
+	id: Int!
+	product: ProductOutput!
+	price: String!
+	skus: [String!]!
+}
+
+input LineItem {
+	variant: Variant!
+	quantity: Int!
+	title: String!
+	price: String!
+}
+
+type Adjustment {
+	old_value: PriceOutput!
+	new_value: PriceOutput!
+	message: String!
+}
+
+type LineItemOutput {
+	variant: VariantOutput!
+	quantity: Int!
+	title: String!
+	price: String!
+}
+
+input Cart {
+	line_items: [LineItem!]!
+	discount_codes: [String!]!
+}
+
+input DiscountsExtensionRequest {
+	checkout: Cart!
+}
+
+type DiscountsExtensionResponse {
+	line_items: [LineItemOutput!]!
+}
+
+type Query {
+	run(root: DiscountsExtensionRequest!): DiscountsExtensionResponse!
+}
+
+schema { query: Query }

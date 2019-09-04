@@ -21,20 +21,70 @@ end
 
 puts
 puts "--> Deploy"
-ret = run("curl localhost:8000/module/ -F bytecode=@./library.wasm -F schema=@./test.schema")
+ret = run("curl localhost:8000/module/ -F bytecode=@./library.wasm -F schema=@./test.discount.schema")
 module_id = JSON.parse(ret)["hash"]
 
 puts
 puts "--> Run"
 json = <<JSON
 {
-  "money": {
-    "subunits": 98,
-    "iso_currency": "CAD"
-  },
-  "presentment_currency": "CAD",
-  "shop_currency": "CAD",
-  "numbers": ["1","2","3"]
+  "checkout": {
+    "line_items": [
+      {
+        "quantity": 1,
+        "title": "title 1",
+        "price": "price 2",
+        "variant": {
+          "id": 1,
+          "product": {
+            "id": 1,
+            "title": "product title 1",
+            "tags": [
+              "tag1",
+              "tag2",
+              "tag3"
+            ],
+            "gift_card": true
+          },
+          "price": "variant price 1",
+          "skus": [
+            "sku1",
+            "sku2",
+            "sku3"
+          ]
+        }
+      },
+      {
+        "quantity": 2,
+        "title": "title 2",
+        "price": "price 2",
+        "variant": {
+          "id": 2,
+          "product": {
+            "id": 2,
+            "title": "product title 2",
+            "tags": [
+              "tag1",
+              "tag2",
+              "tag3"
+            ],
+            "gift_card": true
+          },
+          "price": "variant price 2",
+          "skus": [
+            "sku1",
+            "sku2",
+            "sku3"
+          ]
+        }
+      }
+    ],
+    "discount_codes": [
+      "1",
+      "2",
+      "3"
+    ]
+  }
 }
 JSON
 run(%Q(curl localhost:8000/module/#{module_id} --data-ascii '#{json}'))
