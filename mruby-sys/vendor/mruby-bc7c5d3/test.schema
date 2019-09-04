@@ -12,6 +12,7 @@ input MultiCurrencyRequest {
 	money: MoneyInput!
 	presentment_currency: String
 	shop_currency: String
+  numbers: [Int!]!
 }
 
 type Query {
