@@ -33,6 +33,28 @@ mrb_value slice_of_int_length(mrb_state *mrb, mrb_value self) {
     return mrb_fixnum_value(slice->length);
 }
 
+struct slice_of_string {
+    struct SliceUtf8** data;
+    uint32_t length;
+};
+mrb_value slice_of_string_each(mrb_state *mrb, mrb_value self) {
+    mrb_value block;
+    mrb_get_args(mrb, "&!", &block);
+
+    struct slice_of_string *slice = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+
+    for(uint32_t i = 0; i < slice->length; i++) {
+        struct SliceUtf8* s = slice->data[i];
+        mrb_yield(mrb, block, mrb_str_new(mrb, s->data, s->length));
+    }
+
+    return self;
+}
+mrb_value slice_of_string_length(mrb_state *mrb, mrb_value self) {
+    struct slice_of_string *slice = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+    return mrb_fixnum_value(slice->length);
+}
+
 /* Input */
 struct MoneyInput {
     int subunits;
@@ -54,7 +76,7 @@ struct MultiCurrencyRequest {
     struct MoneyInput* money;
     struct SliceUtf8* presentment_currency;
     struct SliceUtf8* shop_currency;
-    struct slice_of_int* numbers;
+    struct slice_of_string* numbers;
 };
 mrb_value mcr_money(mrb_state *mrb, mrb_value self) {
     return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@_money"));
@@ -90,7 +112,7 @@ WASM_EXPORT struct Money* run(struct MultiCurrencyRequest* mcr) {
     if (!mrb) { abort(); }
 
     char* ruby_script = "\
-                            class SliceOfInt \n\
+                            class SliceOfString \n\
                               include Enumerable \n\
                             end \n\
                             class MultiCurrencyRequest \n\
@@ -104,16 +126,19 @@ WASM_EXPORT struct Money* run(struct MultiCurrencyRequest* mcr) {
                               end \n\
                             end \n\
                             def run(req) \n\
-                              sum = req.numbers.reduce(:+) \n\
-                              Money.new(sum, req.money.iso_currency) \n\
+                              Money.new(req.numbers.length, req.numbers.reduce(:+)) \n\
                             end \n\
                         ";
     mrb_value script = mrb_load_string(mrb, ruby_script);
 
     /* Define class */
-    struct RClass *mrb_soi_class = mrb_class_get(mrb, "SliceOfInt");
-    mrb_define_method(mrb, mrb_soi_class, "each", &slice_of_int_each, MRB_ARGS_NONE());
-    mrb_define_method(mrb, mrb_soi_class, "length", &slice_of_int_length, MRB_ARGS_NONE());
+    /* struct RClass *mrb_soi_class = mrb_class_get(mrb, "SliceOfInt"); */
+    /* mrb_define_method(mrb, mrb_soi_class, "each", &slice_of_int_each, MRB_ARGS_NONE()); */
+    /* mrb_define_method(mrb, mrb_soi_class, "length", &slice_of_int_length, MRB_ARGS_NONE()); */
+
+    struct RClass *mrb_sos_class = mrb_class_get(mrb, "SliceOfString");
+    mrb_define_method(mrb, mrb_sos_class, "each", &slice_of_string_each, MRB_ARGS_NONE());
+    mrb_define_method(mrb, mrb_sos_class, "length", &slice_of_string_length, MRB_ARGS_NONE());
 
     struct RClass *mrb_mcr_class = mrb_class_get(mrb, "MultiCurrencyRequest");
     mrb_define_method(mrb, mrb_mcr_class, "money", &mcr_money, MRB_ARGS_NONE());
@@ -132,10 +157,10 @@ WASM_EXPORT struct Money* run(struct MultiCurrencyRequest* mcr) {
     mrb_value mrb_mi_obj = mrb_obj_new(mrb, mrb_mi_class, 0, &nil);
     mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_mi_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_mi_ptr);
 
-    /* init slice of int object */
-    mrb_value mrb_soi_ptr = mrb_cptr_value(mrb, mcr->numbers);
-    mrb_value mrb_soi_obj = mrb_obj_new(mrb, mrb_soi_class, 0, &nil);
-    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_soi_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_soi_ptr);
+    /* init slice of string object */
+    mrb_value mrb_sos_ptr = mrb_cptr_value(mrb, mcr->numbers);
+    mrb_value mrb_sos_obj = mrb_obj_new(mrb, mrb_sos_class, 0, &nil);
+    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_sos_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_sos_ptr);
 
     /* init MultiCurrencyRequest object */
     mrb_value mrb_mcr_ptr = mrb_cptr_value(mrb, mcr);
@@ -144,7 +169,7 @@ WASM_EXPORT struct Money* run(struct MultiCurrencyRequest* mcr) {
 
     /* set mi object as an instance variable of mcr object */
     mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_mcr_obj), mrb_intern_lit(mrb, "@_money"), mrb_mi_obj);
-    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_mcr_obj), mrb_intern_lit(mrb, "@_numbers"), mrb_soi_obj);
+    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_mcr_obj), mrb_intern_lit(mrb, "@_numbers"), mrb_sos_obj);
 
     /* Run */
     mrb_value rv = mrb_funcall_argv(mrb, script, mrb_intern_lit(mrb, "run"), 1, &mrb_mcr_obj);

@@ -34,7 +34,7 @@ json = <<JSON
   },
   "presentment_currency": "CAD",
   "shop_currency": "CAD",
-  "numbers": [1,2,3]
+  "numbers": ["1","2","3"]
 }
 JSON
 run(%Q(curl localhost:8000/module/#{module_id} --data-ascii '#{json}'))
