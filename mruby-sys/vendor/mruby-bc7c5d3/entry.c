@@ -224,7 +224,8 @@ mrb_value request_checkout(mrb_state *mrb, mrb_value self) {
 
 /* Output */
 struct DiscountsExtensionResponse {
-    struct slice_of_line_item* result;
+    struct slice_of_line_item* line_items;
+    /* int line_items; */
 };
 
 /* struct MoneyInput { */
@@ -298,15 +299,106 @@ WASM_EXPORT struct DiscountsExtensionResponse* run(struct DiscountsExtensionRequ
                                 @line_items = line_items \n\
                               end \n\
                             end \n\
-                            def run(req) \n\
-                              num = req.checkout.line_items.map(&:title).map(&:length).reduce(:+) \n\
-                              num = req.checkout.line_items.map(&:variant).map(&:skus).map { |sku| sku.map(&:length).reduce(:+) }.reduce(:+) \n\
-                              line_items = req.checkout.line_items \n\
-                              products = line_items.map(&:variant).map(&:product) \n\
-                              num = products.map(&:id).reduce(:+) \n\
-                              num = products.first.gift_card ? 1111 : 2222 \n\
-                              DiscountsExtensionResponse.new([]) \n\
+                            \n\
+                            ALL_TAGS = ['bulknaked', 'BULKSALTE', 'BULKGFALLS', 'BULKANML', 'BULKBAR', 'BULKBEARD'] \n\
+                            class Pair \n\
+                              attr_reader :first, :second \n\
+                              def initialize(first, second) \n\
+                                @first = first \n\
+                                @second = second \n\
+                              end \n\
                             end \n\
+                            QUANTITY_DISCOUNT_MAPPING = [ \n\
+                              Pair.new(10, 2.0), \n\
+                              Pair.new(20, 5.0), \n\
+                              Pair.new(30, 6.5), \n\
+                              Pair.new(40, 8.0), \n\
+                              Pair.new(50, 9.5) \n\
+                            ] \n\
+                            PRICE_LIST = {} \n\
+                            ALL_TAGS.each { |tag| PRICE_LIST[tag] = QUANTITY_DISCOUNT_MAPPING } \n\
+                             \n\
+                            def find_discount_percentage(price_list, tag, total) \n\
+                              discount_arr = price_list[tag] \n\
+                              return 0 if discount_arr.empty? \n\
+                             \n\
+                              discount_percentage = 2.0 \n\
+                              discount_arr.each do |pair| \n\
+                                if pair.first <= total \n\
+                                  discount_percentage = pair.second \n\
+                                else \n\
+                                  break \n\
+                                end \n\
+                              end \n\
+                             \n\
+                              return discount_percentage \n\
+                            end \n\
+                             \n\
+                            class Adjustment \n\
+                              def initialize(*) \n\
+                              end \n\
+                            end \n\
+                             \n\
+def run(req) \n\
+  orig_line_items = req.checkout.line_items \n\
+ \n\
+  # grouped_line_items = Hash.new { |h,k| h[k] = Array.new } won't work in mruby \n\
+  # I'm simulating its behaviour here \n\
+  tag_to_line_items = {} \n\
+  grouped_line_items = [] \n\
+  # array count is not working either, need to manually counting \n\
+  line_items_count = 0 \n\
+ \n\
+  orig_line_items.each do |line_item| \n\
+    tags = line_item.variant.product.tags \n\
+    tags.each do |tag| \n\
+      if PRICE_LIST.key?(tag) \n\
+        if tag_to_line_items.key?(tag) \n\
+          idx = tag_to_line_items[tag] \n\
+          grouped_line_items[idx].push(line_item) \n\
+        else \n\
+          tag_to_line_items[tag] = line_items_count \n\
+          grouped_line_items << [line_item] \n\
+          line_items_count += 1 \n\
+        end \n\
+      end \n\
+    end \n\
+  end \n\
+ \n\
+  discount_rates = {} \n\
+  tag_to_line_items.each do |(tag, idx)| \n\
+    line_items = grouped_line_items[idx] \n\
+    total = line_items.map(&:quantity).reduce(:+) \n\
+    discount_percentage = find_discount_percentage(PRICE_LIST, tag, total) \n\
+    discount_rates[tag] = discount_percentage \n\
+  end \n\
+ \n\
+  adjustments = [] \n\
+  count = 0 \n\
+  orig_line_items.each do |line_item| \n\
+    tags = line_item.variant.product.tags \n\
+    price = line_item.price.to_i \n\
+    new_item_price = price \n\
+    message = '' \n\
+ \n\
+    tags.each do |tag| \n\
+      if discount_rates.key?(tag) \n\
+        discount_percentage = discount_rates[tag] \n\
+        if discount_percentage > 0 \n\
+          message += 'Discount for ' + tag + ' tagged products' \n\
+          new_item_price = new_item_price * (1 - discount_percentage / 100) \n\
+          count += 1 \n\
+          # break break is not working \n\
+        end \n\
+      end \n\
+    end \n\
+ \n\
+    adjustments << Adjustment.new(line_item.variant.id, new_item_price, message) \n\
+  end \n\
+ \n\
+  # Since there is no glue code for handling output yet, just return [] \n\
+  DiscountsExtensionResponse.new([]) \n\
+end \n\
                         ";
     mrb_value script = mrb_load_string(mrb, ruby_script);
 
@@ -392,8 +484,9 @@ WASM_EXPORT struct DiscountsExtensionResponse* run(struct DiscountsExtensionRequ
     struct slice_of_line_item* result = malloc(sizeof(struct slice_of_line_item));
     result->data = (struct LineItem**)RARRAY_PTR(ret);
     result->length = RARRAY_LEN(ret);
+    response->line_items = result;
 
-    response->result = result;
+    /* response->line_items = mrb_fixnum(ret); */
 
     mrb_close(mrb);
     return response;

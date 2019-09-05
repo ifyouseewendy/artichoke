@@ -97,7 +97,7 @@ def run(req)
   end
 
   # Since there is no glue code for handling output yet, just return []
-  DiscountsExtensionResponse.new(count)
+  DiscountsExtensionResponse.new([])
 end
 
 DiscountsExtensionResponse = Struct.new(:a)
