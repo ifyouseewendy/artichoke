@@ -21,7 +21,7 @@ end
 
 puts
 puts "--> Deploy"
-ret = run("curl localhost:8000/module/ -F bytecode=@./library.wasm -F schema=@./test.discount.schema")
+ret = run("curl localhost:8000/module/ -F bytecode=@./library.wasm -F schema=@./test.schema")
 module_id = JSON.parse(ret)["hash"]
 
 puts

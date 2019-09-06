@@ -1,22 +1,68 @@
-type Money {
-	subunits: Int!
-	iso_currency: String!
-}
-
 input MoneyInput {
-	subunits: Int!
-	iso_currency: String!
+	cents: Int!
+	currency: String!
 }
 
-input MultiCurrencyRequest {
-	money: MoneyInput!
-	presentment_currency: String
-	shop_currency: String
-  numbers: [String!]!
+type MoneyOutput {
+	cents: Int!
+}
+
+input Product {
+	id: ID!
+	title: String!
+	tags: [String!]!
+}
+
+input Variant {
+	id: ID!
+	product: Product!
+	price: MoneyInput!
+}
+
+input LineItem {
+	variant: Variant!
+	quantity: Int!
+	title: String!
+	price: MoneyInput!
+}
+
+type LineItemAllocations {
+	one: [ExplicitAllocation!]!
+}
+
+type ExplicitAllocation {
+	line_index: Int!
+	value: Int!
+	title: String!
+}
+
+type AcrossAllocation {
+	value: Int!
+	value_type: Int!
+	title: String!
+}
+
+input DiscountCode {
+	code: String!
+	amount: MoneyInput!
+	type: String
+}
+
+input Cart {
+	line_items: [LineItem!]!
+	discount_codes: [DiscountCode!]!
+}
+
+input DiscountsExtensionRequest {
+	checkout: Cart!
+}
+
+type DiscountsExtensionResponse {
+	line_item_allocations: LineItemAllocations
 }
 
 type Query {
-	run(root: MultiCurrencyRequest!): Money!
+	run(root: DiscountsExtensionRequest!): DiscountsExtensionResponse!
 }
 
 schema { query: Query }

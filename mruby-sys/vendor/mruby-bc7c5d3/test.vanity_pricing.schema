@@ -1,0 +1,21 @@
+type Money {
+	subunits: Int!
+	iso_currency: String!
+}
+
+input MoneyInput {
+	subunits: Int!
+	iso_currency: String!
+}
+
+input MultiCurrencyRequest {
+	money: MoneyInput!
+	presentment_currency: String
+	shop_currency: String
+}
+
+type Query {
+	run(root: MultiCurrencyRequest!): Money!
+}
+
+schema { query: Query }
