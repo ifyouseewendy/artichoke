@@ -33,7 +33,7 @@ json = <<JSON
       {
         "quantity": 1,
         "title": "title 1",
-        "price": "price 2",
+        "price": { "cents": 10, "currency": "CAD" },
         "variant": {
           "id": 1,
           "product": {
@@ -44,21 +44,15 @@ json = <<JSON
               "tag2",
               "tag3",
               "bulknaked"
-            ],
-            "gift_card": true
+            ]
           },
-          "price": "variant price 1",
-          "skus": [
-            "sku1",
-            "sku2",
-            "sku3"
-          ]
+          "price": { "cents": 10, "currency": "CAD" }
         }
       },
       {
         "quantity": 2,
         "title": "title 2",
-        "price": "price 2",
+        "price": { "cents": 20, "currency": "CAD" },
         "variant": {
           "id": 2,
           "product": {
@@ -69,22 +63,37 @@ json = <<JSON
               "tag2",
               "tag3",
               "bulknaked"
-            ],
-            "gift_card": true
+            ]
           },
-          "price": "variant price 2",
-          "skus": [
-            "sku1",
-            "sku2",
-            "sku3"
-          ]
+          "price": { "cents": 10, "currency": "CAD" }
         }
       }
     ],
     "discount_codes": [
-      "1",
-      "2",
-      "3"
+        {
+        "code": "1",
+        "amount": {
+          "cents": 1,
+          "currency": "CAD"
+        },
+        "type": "a"
+      },
+      {
+        "code": "2",
+        "amount": {
+          "cents": 2,
+          "currency": "CAD"
+        },
+        "type": "b"
+      },
+      {
+        "code": "3",
+        "amount": {
+          "cents": 3,
+          "currency": "CAD"
+        },
+        "type": "c"
+      }
     ]
   }
 }

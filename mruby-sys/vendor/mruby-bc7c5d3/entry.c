@@ -58,12 +58,28 @@ mrb_value slice_of_string_length(mrb_state *mrb, mrb_value self) {
     return mrb_fixnum_value(slice->length);
 }
 
+/* MoneyInput */
+struct MoneyInput {
+    int cents;
+    struct SliceUtf8* currency;
+};
+mrb_value money_input_cents(mrb_state *mrb, mrb_value self) {
+    struct MoneyInput *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+    return mrb_fixnum_value(ptr->cents);
+}
+mrb_value money_input_currency(mrb_state *mrb, mrb_value self) {
+    struct MoneyInput *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+    struct SliceUtf8* s = ptr->currency;
+
+    mrb_value str = mrb_str_new(mrb, s->data, s->length);
+    return str;
+}
+
 /* Product */
 struct Product {
-    int id;
+    uint64_t id;
     struct SliceUtf8* title;
     struct slice_of_string* tags;
-    uint32_t gift_card;
 };
 mrb_value product_id(mrb_state *mrb, mrb_value self) {
     struct Product *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
@@ -87,16 +103,12 @@ mrb_value product_tags(mrb_state *mrb, mrb_value self) {
 
     return mrb_tags_obj;
 }
-mrb_value product_gift_card(mrb_state *mrb, mrb_value self) {
-    struct Product *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
-    return mrb_bool_value(ptr->gift_card > 0);
-}
 
 /* Variant */
 struct Variant {
-    int id;
+    uint64_t id;
     struct Product* product;
-    struct SliceUtf8* price;
+    struct MoneyInput* price;
     struct slice_of_string* skus;
 };
 mrb_value variant_id(mrb_state *mrb, mrb_value self) {
@@ -105,10 +117,15 @@ mrb_value variant_id(mrb_state *mrb, mrb_value self) {
 }
 mrb_value variant_price(mrb_state *mrb, mrb_value self) {
     struct Variant *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
-    struct SliceUtf8* s = ptr->price;
 
-    mrb_value str = mrb_str_new(mrb, s->data, s->length);
-    return str;
+    struct RClass *mrb_money_input_class = mrb_class_get(mrb, "MoneyInput");
+    mrb_value nil = mrb_nil_value();
+
+    mrb_value mrb_money_input_ptr = mrb_cptr_value(mrb, ptr->price);
+    mrb_value mrb_money_input_obj = mrb_obj_new(mrb, mrb_money_input_class, 0, &nil);
+    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_money_input_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_money_input_ptr);
+
+    return mrb_money_input_obj;
 }
 mrb_value variant_product(mrb_state *mrb, mrb_value self) {
     struct Variant *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
@@ -139,7 +156,7 @@ struct LineItem {
     struct Variant* variant;
     int quantity;
     struct SliceUtf8* title;
-    struct SliceUtf8* price;
+    struct MoneyInput* price;
 };
 mrb_value line_item_quantity(mrb_state *mrb, mrb_value self) {
     struct LineItem *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
@@ -154,10 +171,15 @@ mrb_value line_item_title(mrb_state *mrb, mrb_value self) {
 }
 mrb_value line_item_price(mrb_state *mrb, mrb_value self) {
     struct LineItem *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
-    struct SliceUtf8* s = ptr->price;
 
-    mrb_value str = mrb_str_new(mrb, s->data, s->length);
-    return str;
+    struct RClass *mrb_money_input_class = mrb_class_get(mrb, "MoneyInput");
+    mrb_value nil = mrb_nil_value();
+
+    mrb_value mrb_money_input_ptr = mrb_cptr_value(mrb, ptr->price);
+    mrb_value mrb_money_input_obj = mrb_obj_new(mrb, mrb_money_input_class, 0, &nil);
+    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_money_input_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_money_input_ptr);
+
+    return mrb_money_input_obj;
 }
 mrb_value line_item_variant(mrb_state *mrb, mrb_value self) {
     struct LineItem *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
@@ -203,10 +225,73 @@ mrb_value slice_of_line_item_length(mrb_state *mrb, mrb_value self) {
     return mrb_fixnum_value(slice->length);
 }
 
-/* Input */
+/* DiscountCode */
+struct DiscountCode {
+    struct SliceUtf8* code;
+    struct MoneyInput* amount;
+    struct SliceUtf8* type;
+};
+mrb_value discount_code_code(mrb_state *mrb, mrb_value self) {
+    struct DiscountCode *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+    struct SliceUtf8* s = ptr->code;
+
+    mrb_value str = mrb_str_new(mrb, s->data, s->length);
+    return str;
+}
+mrb_value discount_code_amount(mrb_state *mrb, mrb_value self) {
+    struct DiscountCode *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+
+    struct RClass *mrb_money_input_class = mrb_class_get(mrb, "MoneyInput");
+    mrb_value nil = mrb_nil_value();
+
+    mrb_value mrb_money_input_ptr = mrb_cptr_value(mrb, ptr->amount);
+    mrb_value mrb_money_input_obj = mrb_obj_new(mrb, mrb_money_input_class, 0, &nil);
+    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_money_input_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_money_input_ptr);
+
+    return mrb_money_input_obj;
+}
+mrb_value discount_code_type(mrb_state *mrb, mrb_value self) {
+    struct DiscountCode *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+    struct SliceUtf8* s = ptr->type;
+
+    mrb_value str = mrb_str_new(mrb, s->data, s->length);
+    return str;
+}
+
+/* slice_of_discount_code */
+struct slice_of_discount_code {
+    struct DiscountCode** data;
+    uint32_t length;
+};
+mrb_value slice_of_discount_code_each(mrb_state *mrb, mrb_value self) {
+    mrb_value block;
+    mrb_get_args(mrb, "&!", &block);
+
+    struct slice_of_discount_code *slice = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+
+    struct RClass *mrb_dc_class = mrb_class_get(mrb, "DiscountCode");
+    mrb_value nil = mrb_nil_value();
+
+    for(uint32_t i = 0; i < slice->length; i++) {
+        struct DiscountCode* s = slice->data[i];
+
+        mrb_value mrb_dc_ptr = mrb_cptr_value(mrb, s);
+        mrb_value mrb_dc_obj = mrb_obj_new(mrb, mrb_dc_class, 0, &nil);
+        mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_dc_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_dc_ptr);
+
+        mrb_yield(mrb, block, mrb_dc_obj);
+    }
+
+    return self;
+}
+mrb_value slice_of_discount_code_length(mrb_state *mrb, mrb_value self) {
+    struct slice_of_discount_code *slice = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr")));
+    return mrb_fixnum_value(slice->length);
+}
+
 struct Cart {
     struct slice_of_line_item* line_items;
-    struct slice_of_string* discount_codes;
+    struct slice_of_discount_code* discount_codes;
 };
 mrb_value cart_discount_codes(mrb_state *mrb, mrb_value self) {
     return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@_discount_codes"));
@@ -224,70 +309,33 @@ mrb_value request_checkout(mrb_state *mrb, mrb_value self) {
 
 /* Output */
 struct DiscountsExtensionResponse {
-    struct slice_of_line_item* line_items;
+    /* struct slice_of_line_item* line_items; */
     /* int line_items; */
+    struct LineItem* line_items;
 };
-
-/* struct MoneyInput { */
-/*     int subunits; */
-/*     struct SliceUtf8* iso_currency; */
-/* }; */
-/* mrb_value mi_subunits(mrb_state *mrb, mrb_value self) { */
-/*     struct MoneyInput *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
-/*     return mrb_fixnum_value(ptr->subunits); */
-/* } */
-/* mrb_value mi_iso_currency(mrb_state *mrb, mrb_value self) { */
-/*     struct MoneyInput *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
-/*     struct SliceUtf8* s = ptr->iso_currency; */
-/*  */
-/*     mrb_value str = mrb_str_new(mrb, s->data, s->length); */
-/*     return str; */
-/* } */
-/*  */
-/* struct MultiCurrencyRequest { */
-/*     struct MoneyInput* money; */
-/*     struct SliceUtf8* presentment_currency; */
-/*     struct SliceUtf8* shop_currency; */
-/*     struct slice_of_string* numbers; */
-/* }; */
-/* mrb_value mcr_money(mrb_state *mrb, mrb_value self) { */
-/*     return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@_money")); */
-/* } */
-/* mrb_value mcr_presentment_currency(mrb_state *mrb, mrb_value self) { */
-/*     struct MultiCurrencyRequest *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
-/*     struct SliceUtf8* s = ptr->presentment_currency; */
-/*  */
-/*     if (s == NULL) { return mrb_nil_value(); } */
-/*  */
-/*     mrb_value str = mrb_str_new(mrb, s->data, s->length); */
-/*     return str; */
-/* } */
-/* mrb_value mcr_shop_currency(mrb_state *mrb, mrb_value self) { */
-/*     struct MultiCurrencyRequest *ptr = mrb_cptr(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@struct_ptr"))); */
-/*     struct SliceUtf8* s = ptr->shop_currency; */
-/*  */
-/*     mrb_value str = mrb_str_new(mrb, s->data, s->length); */
-/*     return str; */
-/* } */
-/* mrb_value mcr_numbers(mrb_state *mrb, mrb_value self) { */
-/*     return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@_numbers")); */
-/* } */
 
 WASM_EXPORT struct DiscountsExtensionResponse* run(struct DiscountsExtensionRequest* input) {
     mrb_state *mrb = mrb_open();
     if (!mrb) { abort(); }
 
     char* ruby_script = "\
+                            class MoneyInput \n\
+                            end \n\
                             class Product \n\
                             end \n\
                             class Variant \n\
                             end \n\
                             class LineItem \n\
                             end \n\
+                            class DiscountCode \n\
+                            end \n\
                             class SliceOfString \n\
                               include Enumerable \n\
                             end \n\
                             class SliceOfLineItem \n\
+                              include Enumerable \n\
+                            end \n\
+                            class SliceOfDiscountCode \n\
                               include Enumerable \n\
                             end \n\
                             class Cart \n\
@@ -341,7 +389,6 @@ WASM_EXPORT struct DiscountsExtensionResponse* run(struct DiscountsExtensionRequ
                              \n\
 def run(req) \n\
   orig_line_items = req.checkout.line_items \n\
- \n\
   # grouped_line_items = Hash.new { |h,k| h[k] = Array.new } won't work in mruby \n\
   # I'm simulating its behaviour here \n\
   tag_to_line_items = {} \n\
@@ -377,7 +424,7 @@ def run(req) \n\
   count = 0 \n\
   orig_line_items.each do |line_item| \n\
     tags = line_item.variant.product.tags \n\
-    price = line_item.price.to_i \n\
+    price = line_item.price.cents \n\
     new_item_price = price \n\
     message = '' \n\
  \n\
@@ -397,18 +444,22 @@ def run(req) \n\
   end \n\
  \n\
   # Since there is no glue code for handling output yet, just return [] \n\
-  DiscountsExtensionResponse.new([]) \n\
+  DiscountsExtensionResponse.new(nil) \n\
 end \n\
                         ";
     mrb_value script = mrb_load_string(mrb, ruby_script);
 
     /* == Class registriation */
+    /* MoneyInput */
+    struct RClass *mrb_money_input_class = mrb_class_get(mrb, "MoneyInput");
+    mrb_define_method(mrb, mrb_money_input_class, "cents", &money_input_cents, MRB_ARGS_NONE());
+    mrb_define_method(mrb, mrb_money_input_class, "currency", &money_input_currency, MRB_ARGS_NONE());
+
     /* Product */
     struct RClass *mrb_product_class = mrb_class_get(mrb, "Product");
     mrb_define_method(mrb, mrb_product_class, "id", &product_id, MRB_ARGS_NONE());
     mrb_define_method(mrb, mrb_product_class, "title", &product_title, MRB_ARGS_NONE());
     mrb_define_method(mrb, mrb_product_class, "tags", &product_tags, MRB_ARGS_NONE());
-    mrb_define_method(mrb, mrb_product_class, "gift_card", &product_gift_card, MRB_ARGS_NONE());
 
     /* Variant */
     struct RClass *mrb_variant_class = mrb_class_get(mrb, "Variant");
@@ -424,6 +475,12 @@ end \n\
     mrb_define_method(mrb, mrb_li_class, "price", &line_item_price, MRB_ARGS_NONE());
     mrb_define_method(mrb, mrb_li_class, "variant", &line_item_variant, MRB_ARGS_NONE());
 
+    /* DiscountCode */
+    struct RClass *mrb_dc_class = mrb_class_get(mrb, "DiscountCode");
+    mrb_define_method(mrb, mrb_dc_class, "code", &discount_code_code, MRB_ARGS_NONE());
+    mrb_define_method(mrb, mrb_dc_class, "amount", &discount_code_amount, MRB_ARGS_NONE());
+    mrb_define_method(mrb, mrb_dc_class, "type", &discount_code_type, MRB_ARGS_NONE());
+
     /* SliceOfString */
     struct RClass *mrb_sos_class = mrb_class_get(mrb, "SliceOfString");
     mrb_define_method(mrb, mrb_sos_class, "each", &slice_of_string_each, MRB_ARGS_NONE());
@@ -433,6 +490,11 @@ end \n\
     struct RClass *mrb_soli_class = mrb_class_get(mrb, "SliceOfLineItem");
     mrb_define_method(mrb, mrb_soli_class, "each", &slice_of_line_item_each, MRB_ARGS_NONE());
     mrb_define_method(mrb, mrb_soli_class, "length", &slice_of_line_item_length, MRB_ARGS_NONE());
+
+    /* SliceOfDiscountCode */
+    struct RClass *mrb_sodc_class = mrb_class_get(mrb, "SliceOfDiscountCode");
+    mrb_define_method(mrb, mrb_sodc_class, "each", &slice_of_discount_code_each, MRB_ARGS_NONE());
+    mrb_define_method(mrb, mrb_sodc_class, "length", &slice_of_discount_code_length, MRB_ARGS_NONE());
 
     /* Cart */
     struct RClass *mrb_cart_class = mrb_class_get(mrb, "Cart");
@@ -448,9 +510,9 @@ end \n\
     mrb_value nil = mrb_nil_value();
 
     /* discount_codes */
-    mrb_value mrb_sos_ptr = mrb_cptr_value(mrb, input->checkout->discount_codes);
-    mrb_value mrb_sos_obj = mrb_obj_new(mrb, mrb_sos_class, 0, &nil);
-    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_sos_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_sos_ptr);
+    mrb_value mrb_sodc_ptr = mrb_cptr_value(mrb, input->checkout->discount_codes);
+    mrb_value mrb_sodc_obj = mrb_obj_new(mrb, mrb_sodc_class, 0, &nil);
+    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_sodc_obj), mrb_intern_lit(mrb, "@struct_ptr"), mrb_sodc_ptr);
 
     /* line_items */
     mrb_value mrb_soli_ptr = mrb_cptr_value(mrb, input->checkout->line_items);
@@ -469,7 +531,7 @@ end \n\
 
     /* bind togehter */
     mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_cart_obj), mrb_intern_lit(mrb, "@_line_items"), mrb_soli_obj);
-    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_cart_obj), mrb_intern_lit(mrb, "@_discount_codes"), mrb_sos_obj);
+    mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_cart_obj), mrb_intern_lit(mrb, "@_discount_codes"), mrb_sodc_obj);
     mrb_obj_iv_set_force(mrb, mrb_ptr(mrb_request_obj), mrb_intern_lit(mrb, "@_checkout"), mrb_cart_obj);
     /* == Initialize input end */
 
@@ -481,12 +543,14 @@ end \n\
 
     struct DiscountsExtensionResponse *response = malloc(sizeof(struct DiscountsExtensionResponse));
 
-    struct slice_of_line_item* result = malloc(sizeof(struct slice_of_line_item));
-    result->data = (struct LineItem**)RARRAY_PTR(ret);
-    result->length = RARRAY_LEN(ret);
-    response->line_items = result;
+    /* struct slice_of_line_item* result = malloc(sizeof(struct slice_of_line_item)); */
+    /* result->data = (struct LineItem**)RARRAY_PTR(ret); */
+    /* result->length = RARRAY_LEN(ret); */
+    /* response->line_items = result; */
 
     /* response->line_items = mrb_fixnum(ret); */
+
+    response->line_items = NULL;
 
     mrb_close(mrb);
     return response;
