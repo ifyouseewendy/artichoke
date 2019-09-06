@@ -41,3 +41,23 @@ Nice. Go init Runtime Engine now (in release mode, by `env MEMCACHED_SERVERS=run
 
 * Copy the entry to `entry.c` and schema file to `test.schema`
 * Compile, deploy and run by `./run`
+
+## Development notes
+
+There are some weird cases for mruby code, which can be compiled but will run into the `unreachable` error on engine.
+
+```
+# case 1 - nested array in a hash
+ha = {}
+ha[1] = []
+ha[1] << 1
+
+# case 2 - count on array and hash
+ha.count # ha.keys.count
+
+# case 3 - break
+[1,2,3].each do |I|
+  ..
+  break # it’s is not working
+end
+```
