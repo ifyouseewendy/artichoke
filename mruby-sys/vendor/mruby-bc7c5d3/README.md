@@ -35,7 +35,8 @@ A precondition is to have LLVM correclty installed. If you are using a MacOS, th
 3. Check `which clang`, go to its bin file and soft link it to `clang-8`
 4. Check `which wasm-ld`, go to its bin file and soft link it to `wasm-ld-8`
 
-Nice. Go init Runtime Engine now (in release mode, by `env MEMCACHED_SERVERS=runtime-engine.railgun cargo run --release`)
+Nice. Go init Runtime Engine now (in release mode, by `env MEMCACHED_SERVERS=runtime-engine.railgun cargo run --release`).
+The current version of engine is at [acfabda](https://github.com/Shopify/runtime-engine/commit/acfabda747a3f9b8e0615a4728fc46706b299b4b)
 
 **Run**
 
