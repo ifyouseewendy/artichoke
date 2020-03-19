@@ -28,73 +28,75 @@ puts
 puts "--> Run"
 json = <<JSON
 {
-  "checkout": {
-    "line_items": [
-      {
-        "quantity": 1,
-        "title": "title 1",
-        "price": { "cents": 10, "currency": "CAD" },
-        "variant": {
-          "id": 1,
-          "product": {
-            "id": 1,
-            "title": "product title 1",
-            "tags": [
-              "tag1",
-              "tag2",
-              "tag3",
-              "bulknaked"
-            ]
-          },
-          "price": { "cents": 10, "currency": "CAD" }
-        }
-      },
-      {
-        "quantity": 2,
-        "title": "title 2",
-        "price": { "cents": 20, "currency": "CAD" },
-        "variant": {
-          "id": 2,
-          "product": {
-            "id": 2,
-            "title": "product title 2",
-            "tags": [
-              "tag1",
-              "tag2",
-              "tag3",
-              "bulknaked"
-            ]
-          },
-          "price": { "cents": 10, "currency": "CAD" }
-        }
-      }
-    ],
-    "discount_codes": [
+  "input": {
+    "checkout": {
+      "line_items": [
         {
-        "code": "1",
-        "amount": {
-          "cents": 1,
-          "currency": "CAD"
+          "quantity": 1,
+          "title": "title 1",
+          "price": { "cents": 10, "currency": "CAD" },
+          "variant": {
+            "id": 1,
+            "product": {
+              "id": 1,
+              "title": "product title 1",
+              "tags": [
+                "tag1",
+                "tag2",
+                "tag3",
+                "bulknaked"
+              ]
+            },
+            "price": { "cents": 10, "currency": "CAD" }
+          }
         },
-        "type": "a"
-      },
-      {
-        "code": "2",
-        "amount": {
-          "cents": 2,
-          "currency": "CAD"
+        {
+          "quantity": 2,
+          "title": "title 2",
+          "price": { "cents": 20, "currency": "CAD" },
+          "variant": {
+            "id": 2,
+            "product": {
+              "id": 2,
+              "title": "product title 2",
+              "tags": [
+                "tag1",
+                "tag2",
+                "tag3",
+                "bulknaked"
+              ]
+            },
+            "price": { "cents": 10, "currency": "CAD" }
+          }
+        }
+      ],
+      "discount_codes": [
+          {
+          "code": "1",
+          "amount": {
+            "cents": 1,
+            "currency": "CAD"
+          },
+          "type": "a"
         },
-        "type": "b"
-      },
-      {
-        "code": "3",
-        "amount": {
-          "cents": 3,
-          "currency": "CAD"
+        {
+          "code": "2",
+          "amount": {
+            "cents": 2,
+            "currency": "CAD"
+          },
+          "type": "b"
         },
-        "type": "c"
-      }
-    ]
+        {
+          "code": "3",
+          "amount": {
+            "cents": 3,
+            "currency": "CAD"
+          },
+          "type": "c"
+        }
+      ]
+    }
   }
 }
 JSON

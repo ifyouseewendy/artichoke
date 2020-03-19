@@ -62,7 +62,7 @@ type DiscountsExtensionResponse {
 }
 
 type Query {
-	run(root: DiscountsExtensionRequest!): DiscountsExtensionResponse!
+	run(input: DiscountsExtensionRequest!): DiscountsExtensionResponse!
 }
 
 schema { query: Query }
